@@ -2,6 +2,8 @@
 
 A CLI client for hastebin-based text sharing websites.
 
+Installation: pip install git+https://github.com/Vikdemen/hasty
+
 Usage:\
 hasty [-h] [-c | -f FILE] [-p]\
 Grabs data from stdin (press Ctrl-D when you finish writing) and loads it on hastebin.com, returning the link\
