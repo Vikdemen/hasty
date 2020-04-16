@@ -44,6 +44,8 @@ $RECYCLE.BIN/
 # Covers JetBrains IDEs: IntelliJ, RubyMine, PhpStorm, AppCode, PyCharm, CLion, Android Studio, WebStorm and Rider
 # Reference: https://intellij-support.jetbrains.com/hc/en-us/articles/206544839
 
+.idea
+
 # User-specific stuff
 .idea/**/workspace.xml
 .idea/**/tasks.xml
@@ -253,25 +255,3 @@ dmypy.json
 
 # Cython debug symbols
 cython_debug/
-
-/.idea/$CACHE_FILE$
-/.idea/.gitignore
-/.idea/sonarlint/issuestore/8/e/8e2edce0d507e1297474f25c00cae94258db38d8
-/.idea/sonarlint/issuestore/8/e/8e5b1c08dc85d155ed7cf4dd6949ea7ef7d6c0a0
-/.idea/sonarlint/issuestore/8/e/8ec9a00bfd09b3190ac6b22251dbb1aa95a0579d
-/.idea/sonarlint/issuestore/2/7/27a34f3394fc84de11070bee0c2d14bc8b7b2ae7
-/.idea/sonarlint/issuestore/7/0/70a14023bcee2a54341d1aab3cadcf918f732c98
-/.idea/sonarlint/issuestore/2/6/260c16d0c0db389dc861969f8c921f71efc023ae
-/.idea/sonarlint/issuestore/0/3/0398ccd0f49298b10a3d76a47800d2ebecd49859
-/.idea/sonarlint/issuestore/1/9/19359a61ae2446b51b549167b014da2fcf265768
-/.idea/sonarlint/issuestore/a/5/a5cc2925ca8258af241be7e5b0381edf30266302
-/.idea/hasty.iml
-/.idea/sonarlint/issuestore/index.pb
-/.idea/misc.xml
-/.idea/modules.xml
-/.idea/inspectionProfiles/profiles_settings.xml
-/.idea/inspectionProfiles/Project_Default.xml
-/.idea/vcs.xml
-.idea/sonarlint/issuestore/0/1/
-.idea/sonarlint/issuestore/a/3/
-.idea/sonarlint/issuestore/c/
