@@ -1,6 +1,6 @@
 ***Hasty***
 
-[![Actions Status](https://github.com/Vikdemen/hasty/workflows/Python application/badge.svg)](https://github.com/Vikdemen/hasty/actions)
+![Python application](https://github.com/Vikdemen/hasty/workflows/Python%20application/badge.svg)
 
 A CLI client for hastebin-based text sharing websites.
 
