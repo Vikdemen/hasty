@@ -13,6 +13,6 @@ setup(
     author_email='viktor.demen@gmail.com',
     description='Python-based hastebin CLI client',
     entry_points={
-        'console_scripts': ['hasty = hasty.hasty:main']
+        'console_scripts': ['hasty = hasty.__main__:main']
     }
 )

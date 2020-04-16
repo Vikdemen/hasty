@@ -1,5 +1,12 @@
+#!/usr/bin/env python
+# -*- encoding: utf-8 -*-
 import sys
 from hasty import hasty
 
-if __name__ == '__main__':
+
+def main():
     hasty.main(sys.argv[1:])
+
+
+if __name__ == '__main__':
+    main()
