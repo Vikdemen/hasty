@@ -32,8 +32,8 @@ class Hastebin:
             raise requests.HTTPError()
 
 
-def main():
-    get_text, show_link = cli.get_io()
+def main(argv):
+    get_text, show_link = cli.get_io(argv)
     url = r'https://hastebin.com/'
     # TODO - read from ini file
     text = get_text()
@@ -44,7 +44,3 @@ def main():
         print('Service is unavailable')
     else:
         show_link(text_link)
-
-
-if __name__ == '__main__':
-    main()

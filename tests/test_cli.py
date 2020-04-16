@@ -1,12 +1,27 @@
+import sys
+
+import pyperclip
 import pytest
 from hasty import cli
 
 
+def test_choose_io_copy():
+    input_method, output_method = cli.get_io(['-c'])
+    assert input_method == pyperclip.paste
+
+
+def test_choose_io_paste():
+    input_method, output_method = cli.get_io(['-p'])
+    assert output_method == pyperclip.copy
+
+# TODO - ambigious parameters
+
+
 def test_args_none():
-    args = cli.parse_args([])
-    assert not args.paste
-    assert not args.copy
-    assert args.file is None
+    file, copy, paste = cli.parse_args([])
+    assert not paste
+    assert not copy
+    assert file is sys.stdin
 
 
 def test_args_help():
@@ -15,26 +30,22 @@ def test_args_help():
 
 
 def test_args_copy():
-    args = cli.parse_args(['-c'])
-    assert args.copy
-    args = cli.parse_args([])
-    assert not args.copy
+    file, copy, paste = cli.parse_args(['-c'])
+    assert copy
 
 
 def test_args_paste():
-    args = cli.parse_args(['-p'])
-    assert args.paste
-    args = cli.parse_args([])
-    assert not args.paste
+    file, copy, paste = cli.parse_args(['-p'])
+    assert paste
 
 
 def test_args_combination():
-    args = cli.parse_args(['-cp'])
-    assert args.copy
-    assert args.paste
-    args = cli.parse_args(['-c', '-p'])
-    assert args.copy
-    assert args.paste
+    file, copy, paste = cli.parse_args(['-cp'])
+    assert copy
+    assert paste
+    file, copy, paste = cli.parse_args(['-c', '-p'])
+    assert copy
+    assert paste
 
 
 def test_exclusive_args():
