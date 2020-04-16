@@ -1,4 +1,4 @@
-from src.hasty import hasty, cli
+from hasty import hasty, cli
 import pytest
 import requests_mock
 
@@ -24,7 +24,7 @@ def test_paste():
 # TODO - test error handling
 
 def test_args_none():
-    args = hasty.parse_args([])
+    args = cli.parse_args([])
     assert not args.paste
     assert not args.copy
     assert args.file is None
