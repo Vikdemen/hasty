@@ -1,5 +1,6 @@
 ***Hasty***
-[![Actions Status](https://xxx.execute-api.us-west-2.amazonaws.com/production/badge/{owner}/{repo})](https://xxx.execute-api.us-west-2.amazonaws.com/production/results/{Vikdemen}/{hasty})
+
+[![Actions Status](https://github.com/Vikdemen/hasty/workflows/Python application/badge.svg)](https://github.com/Vikdemen/hasty/actions)
 
 A CLI client for hastebin-based text sharing websites.
 
