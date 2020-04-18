@@ -1,24 +1,17 @@
+"""
+Command line argument parsing
+"""
 import argparse
-import functools
-import sys
 import io
-from typing import List, Callable, Tuple
-
-import pyperclip
+from typing import List, Tuple, Optional
 
 
-def get_io(params: List[str]) -> Tuple[Callable[[], str], Callable[[str], None]]:
+def parse_args(argv: List[str]) -> Tuple[Optional[io.TextIOWrapper], bool, bool]:
     """
-    :param params: command line parameters
-    :return: Function for data input and function for data output
+    :param argv: Command line arguments
+    :return: Opened file (if '-f') or None, if it should use clipboard for input,
+    and if it should use clipboard for output.
     """
-    file, copy, paste = parse_args(params)
-    input_method = choose_input(file, copy)
-    output_method = choose_output(paste)
-    return input_method, output_method
-
-
-def parse_args(args: List[str]) -> Tuple[io.TextIOWrapper, bool, bool]:
     parser = argparse.ArgumentParser()
     group = parser.add_mutually_exclusive_group()
     group.add_argument("-c", "--copy",
@@ -30,36 +23,10 @@ def parse_args(args: List[str]) -> Tuple[io.TextIOWrapper, bool, bool]:
     parser.add_argument("-p", "--paste",
                         help="Pastes the link in a clipboard instead of printing",
                         action="store_true", default=False)
-    args = parser.parse_args(args)
-    copy = args.copy
-    paste = args.paste
+    args = parser.parse_args(argv)
+    from_clipboard = args.copy
+    to_clipboard = args.paste
     file = args.file
-    if file is None:
-        file = sys.stdin
-    return file, copy, paste
+    return file, from_clipboard, to_clipboard
 
 
-def choose_input(file: io.TextIOWrapper, copy: bool) -> Callable[[], str]:
-    if copy:
-        input_method = pyperclip.paste
-    else:
-        input_method = functools.partial(get_input, file)
-    return input_method
-
-
-def choose_output(paste: bool) -> Callable[[str], None]:
-    if paste:
-        output_method = pyperclip.copy
-    else:
-        output_method = print
-    return output_method
-
-
-def get_input(source: io.TextIOWrapper) -> str:
-    """
-    :param source: File wrapper to read data from. Uses stdin if None.
-    :return: Function that reads data from given IO
-    """
-    with source:
-        text = source.read()
-    return text
