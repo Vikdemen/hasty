@@ -36,8 +36,10 @@ def test_bin():
     Checks proper class creation
     """
     url = 'https://helloworld.com/'
-    hastebin = hasty.Hastebin(url)
+    logger = mock.Mock()
+    hastebin = hasty.Hastebin(url, logger)
     assert hastebin.url == url
+    assert hastebin.logger == logger
 
 
 def test_paste():
@@ -47,7 +49,13 @@ def test_paste():
         mock_link = url + mock_response
         mock_api.post(url + 'documents', json={'key': mock_response})
 
-        hastebin = hasty.Hastebin(url)
+        def stub(*args, **kwargs):
+            # Mock
+            pass
+
+        logger = mock.Mock()
+        logger.info = stub
+        hastebin = hasty.Hastebin(url, logger)
         link = hastebin.paste('hello world')
         assert link == mock_link
 
