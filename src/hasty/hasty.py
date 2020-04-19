@@ -22,7 +22,6 @@ class Hastebin:
         """
         :param url: Url in https://hastebin.com/ format
         """
-        # TODO - validation
         self.url = url
         self.logger = logger
 
@@ -32,14 +31,16 @@ class Hastebin:
         :param text: Text to post on hastebin
         :return: Link to the paste`
         """
-        self.logger.info(f'Pasting to {self.url}')
+        self.logger.debug(f'Text received is {text}')
+        self.logger.debug(f'Pasting to {self.url}')
         response = requests.post(self.url + 'documents', text)
-        self.logger.info(f'Response code is {response.status_code}')
+        self.logger.debug(f'Response code is {response.status_code}')
         if response.ok:
             key: str = response.json()['key']
-            self.logger.info(f'Key is {key}')
+            self.logger.info(f'Link received is {self.url}{key}')
             return self.url + key
         else:
+            self.logger.error(f'Invalid response code {response.status_code}')
             raise requests.RequestException()
 
 
@@ -48,16 +49,26 @@ def main(argv: List[str]) -> None:
     :param argv: A list of console arguments
     :return: None
     """
-    source, from_clipboard, to_clipboard = cli.parse_args(argv)
-    url = config.HASTEBIN_URL
-    text = get_text(from_clipboard, source)
-    logger = logging.getLogger(__name__)
+    args = cli.parse_args(argv)
+
+    settings = config.Config()
+    url = settings.url
+    logger = set_logger(args.debug)
+
+    text = get_text(args.copy, args.file)
     hastebin = Hastebin(url, logger)
     try:
         text_link = hastebin.paste(text)
-        show_link(text_link, to_clipboard)
+        show_link(text_link, args.paste)
     except requests.RequestException:
         print('Service is unavailable')
+
+
+def set_logger(debug: bool = False):
+    logger = logging.getLogger(__name__)
+    level = logging.DEBUG if debug else logging.WARNING
+    logging.basicConfig(level=level)
+    return logger
 
 
 def get_text(clipboard: bool, source: Optional[io.TextIOWrapper]) -> str:

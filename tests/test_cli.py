@@ -6,10 +6,11 @@ def test_args_none():
     """
     Without args program should use stdin and print to stdout
     """
-    file, from_clipboard, to_clipboard = cli.parse_args([])
-    assert not to_clipboard
-    assert not from_clipboard
-    assert file is None
+    args = cli.parse_args([])
+    assert not args.copy
+    assert not args.paste
+    assert args.file is None
+    assert not args.debug
 
 
 def test_args_help():
@@ -26,20 +27,20 @@ def test_args_copy():
     """
     Uses clipboard for input when called with "--copy"
     """
-    file, from_clipboard, paste = cli.parse_args(['-c'])
-    assert from_clipboard
-    file, from_clipboard, paste = cli.parse_args(['--copy'])
-    assert from_clipboard
+    args = cli.parse_args(['-c'])
+    assert args.copy
+    args = cli.parse_args(['--copy'])
+    assert args.copy
 
 
 def test_args_paste():
     """
     Uses clipboard for output when called with "--paste"
     """
-    file, from_clipboard, to_clipboard = cli.parse_args(['-p'])
-    assert to_clipboard
-    file, from_clipboard, to_clipboard = cli.parse_args(['--paste'])
-    assert to_clipboard
+    args = cli.parse_args(['-p'])
+    assert args.paste
+    args = cli.parse_args(['--paste'])
+    assert args.paste
 
 
 def test_args_file():
@@ -51,16 +52,26 @@ def test_args_file():
     # TODO - mock file opening
 
 
+def test_args_debug():
+    """
+    With "--debug" argument, logging level is set to "Debug"
+    """
+    args = cli.parse_args(['-d'])
+    assert args.debug
+    args = cli.parse_args(['--debug'])
+    assert args.debug
+
+
 def test_args_combination():
     """
     Arguments can be combined
     """
-    file, copy, paste = cli.parse_args(['-cp'])
-    assert copy
-    assert paste
-    file, copy, paste = cli.parse_args(['-c', '-p'])
-    assert copy
-    assert paste
+    args = cli.parse_args(['-cp'])
+    assert args.copy
+    assert args.paste
+    args = cli.parse_args(['-c', '-p'])
+    assert args.copy
+    assert args.paste
 
 
 def test_exclusive_args():

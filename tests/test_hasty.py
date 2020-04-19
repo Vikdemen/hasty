@@ -26,6 +26,7 @@ def test_main(monkeypatch):
 
     monkeypatch.setattr('hasty.hasty.get_text', mock_input)
     monkeypatch.setattr('hasty.hasty.show_link', mock_output)
+    # TODO - Mock the logger
     monkeypatch.setattr('hasty.hasty.Hastebin.paste', hastebin_mock)
     hasty.main([])
     assert result == mock_link
