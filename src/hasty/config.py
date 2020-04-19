@@ -8,4 +8,6 @@ class Config:
     def __init__(self, filepath=CONFIG_FILE):
         self.parser = configparser.ConfigParser()
         self.parser.read(filepath)
-        self.url = self.parser['DEFAULT']['url']
+        #self.url = self.parser['DEFAULT']['url']
+        #FIXME
+        self.url = r'https://hastebin.com/'

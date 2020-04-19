@@ -16,7 +16,6 @@ def test_main(monkeypatch):
     mock_input = Mock(return_value='hello world')
     mock_set_logger = Mock()
     mock_output = Mock()
-
     monkeypatch.setattr('hasty.hasty.get_text', mock_input)
     monkeypatch.setattr('hasty.hasty.show_link', mock_output)
     monkeypatch.setattr('hasty.hasty.set_logger', mock_set_logger)
