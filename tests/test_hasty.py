@@ -1,5 +1,5 @@
 import io
-import unittest.mock as mock
+from unittest.mock import Mock
 
 import requests_mock
 from hasty import hasty
@@ -12,24 +12,18 @@ def test_main(monkeypatch):
     url = 'https://hastebin.com/'
     mock_response = 'hello111'
     mock_link = url + mock_response
-    result = ''
-
-    def mock_input(*args, **kwargs):
-        return 'hello world'
-
-    def mock_output(link, *args, **kwargs):
-        nonlocal result
-        result = link
-
-    def hastebin_mock(*args, **kwargs):
-        return mock_link
+    hastebin_mock = Mock(return_value=mock_link)
+    mock_input = Mock(return_value='hello world')
+    mock_set_logger = Mock()
+    mock_output = Mock()
 
     monkeypatch.setattr('hasty.hasty.get_text', mock_input)
     monkeypatch.setattr('hasty.hasty.show_link', mock_output)
-    # TODO - Mock the logger
+    monkeypatch.setattr('hasty.hasty.set_logger', mock_set_logger)
     monkeypatch.setattr('hasty.hasty.Hastebin.paste', hastebin_mock)
+
     hasty.main([])
-    assert result == mock_link
+    assert mock_output.call_args[0] == (mock_link, False)
 
 
 def test_bin():
@@ -37,7 +31,7 @@ def test_bin():
     Checks proper class creation
     """
     url = 'https://helloworld.com/'
-    logger = mock.Mock()
+    logger = Mock()
     hastebin = hasty.Hastebin(url, logger)
     assert hastebin.url == url
     assert hastebin.logger == logger
@@ -50,12 +44,11 @@ def test_paste():
         mock_link = url + mock_response
         mock_api.post(url + 'documents', json={'key': mock_response})
 
-        def stub(*args, **kwargs):
-            # Mock
-            pass
+        logger = Mock()
+        logger.debug = Mock()
+        logger.info = Mock()
+        logger.error = Mock()
 
-        logger = mock.Mock()
-        logger.info = stub
         hastebin = hasty.Hastebin(url, logger)
         link = hastebin.paste('hello world')
         assert link == mock_link
@@ -89,8 +82,7 @@ def text_get_from_stdin(monkeypatch):
 
 def test_get_text_from_clipboard(monkeypatch):
     text = 'Hello world'
-    mock_func = mock.Mock()
-    mock_func.return_value = text
+    mock_func = Mock(return_value=text)
     monkeypatch.setattr('pyperclip.paste', mock_func)
     result = hasty.get_text(clipboard=True, source=None)
     assert result == text
@@ -98,15 +90,10 @@ def test_get_text_from_clipboard(monkeypatch):
 
 def test_show_link_to_clipboard(monkeypatch):
     link = 'https://helloworld.com/hello111'
-    result = ''
-
-    def mock_clip(text):
-        nonlocal result
-        result = text
-
+    mock_clip = Mock()
     monkeypatch.setattr('pyperclip.copy', mock_clip)
     hasty.show_link(link, clipboard=True)
-    assert result == link
+    assert mock_clip.call_args[0] == (link,)
 
 
 def test_show_link_to_stdout(capsys):
