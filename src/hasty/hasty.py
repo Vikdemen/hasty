@@ -13,37 +13,6 @@ from hasty import cli, config
 URL = str
 
 
-class Hastebin:
-    """
-    Interface with hastebin-based site
-    """
-
-    def __init__(self, url: URL, logger):
-        """
-        :param url: Url in https://hastebin.com/ format
-        """
-        self.url = url
-        self.logger = logger
-
-    def paste(self, text: str) -> URL:
-        """
-        Sends the text to hastebin-based site
-        :param text: Text to post on hastebin
-        :return: Link to the paste`
-        """
-        self.logger.debug(f'Text received is {text}')
-        self.logger.debug(f'Pasting to {self.url}')
-        response = requests.post(self.url + 'documents', text)
-        self.logger.debug(f'Response code is {response.status_code}')
-        if response.ok:
-            key: str = response.json()['key']
-            self.logger.info(f'Link received is {self.url}{key}')
-            return self.url + key
-        else:
-            self.logger.error(f'Invalid response code {response.status_code}')
-            raise requests.RequestException()
-
-
 def main(argv: List[str]) -> None:
     """
     :param argv: A list of console arguments
@@ -51,9 +20,10 @@ def main(argv: List[str]) -> None:
     """
     args = cli.parse_args(argv)
 
-    settings = config.Config()
-    url = settings.url
     logger = set_logger(args.debug)
+    settings = config.Config(logger=logger)
+
+    url = settings.url
 
     text = get_text(args.copy, args.file)
     hastebin = Hastebin(url, logger)
@@ -99,3 +69,37 @@ def show_link(text_link: URL, clipboard: bool) -> None:
         pyperclip.copy(text_link)
     else:
         print(text_link)
+
+
+class Hastebin:
+    """
+    Interface with hastebin-based site
+    """
+
+    def __init__(self, url: URL, logger=None):
+        """
+        :param url: Url in https://hastebin.com/ format
+        """
+        self.url = url
+        self.logger = logger
+
+    def paste(self, text: str) -> URL:
+        """
+        Sends the text to hastebin-based site
+        :param text: Text to post on hastebin
+        :return: Link to the paste`
+        """
+        if self.logger is not None:
+            self.logger.debug(f'Text received is {text}')
+            self.logger.debug(f'Pasting to {self.url}')
+        response = requests.post(self.url + 'documents', text)
+        if self.logger is not None:
+            self.logger.debug(f'Response code is {response.status_code}')
+        if response.ok:
+            key: str = response.json()['key']
+            if self.logger is not None:
+                self.logger.info(f'Link received is {self.url}{key}')
+            return self.url + key
+        else:
+            self.logger.error(f'Invalid response code {response.status_code}')
+            raise requests.RequestException()

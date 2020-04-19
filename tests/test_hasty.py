@@ -42,13 +42,7 @@ def test_paste():
         mock_response = 'hello111'
         mock_link = url + mock_response
         mock_api.post(url + 'documents', json={'key': mock_response})
-
-        logger = Mock()
-        logger.debug = Mock()
-        logger.info = Mock()
-        logger.error = Mock()
-
-        hastebin = hasty.Hastebin(url, logger)
+        hastebin = hasty.Hastebin(url)
         link = hastebin.paste('hello world')
         assert link == mock_link
 
@@ -66,21 +60,21 @@ def test_paste():
 
 
 def test_get_text_from_io():
-    text = 'Hello world'
+    text = 'Text from file'
     source = io.StringIO(text)
     result = hasty.get_text(source=source, clipboard=False)
     assert result == text
 
 
 def text_get_from_stdin(monkeypatch):
-    text = 'Hello world'
+    text = 'Text from stdin'
     monkeypatch.setattr('sys.stdin', io.StringIO(text))
     result = hasty.get_text(source=None, clipboard=False)
     assert result == text
 
 
 def test_get_text_from_clipboard(monkeypatch):
-    text = 'Hello world'
+    text = 'Text in clipboard'
     mock_func = Mock(return_value=text)
     monkeypatch.setattr('pyperclip.paste', mock_func)
     result = hasty.get_text(clipboard=True, source=None)
