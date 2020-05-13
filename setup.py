@@ -7,6 +7,11 @@ setup(
     version='0.0.1',
     package_dir={'': 'src'},
     packages=find_packages(where='src'),
+    include_package_data=True,
+    package_data={
+        # If any package contains *.ini files, include them
+        '': ['*.ini'],
+    },
     url='https://github.com/Vikdemen/hasty',
     license='MIT License',
     author='Demenev Viktor',

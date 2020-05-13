@@ -1,96 +1,152 @@
-import io
+"""
+Unit testing
+"""
+import sys
+from typing import Callable, NamedTuple
 from unittest.mock import Mock
+import pytest
 
-import requests_mock
+import pyperclip
+import requests
+import responses
 from hasty import hasty
 
 
-def test_main(monkeypatch):
+class Paste(NamedTuple):
     """
-    Reads the input, pastes the text to hastebin, then prints the link
+    Container for mock values
     """
-    url = 'https://hastebin.com/'
-    mock_response = 'hello111'
-    mock_link = url + mock_response
-    hastebin_mock = Mock(return_value=mock_link)
-    mock_input = Mock(return_value='hello world')
-    mock_set_logger = Mock()
-    mock_output = Mock()
-    monkeypatch.setattr('hasty.hasty.get_text', mock_input)
-    monkeypatch.setattr('hasty.hasty.show_link', mock_output)
-    monkeypatch.setattr('hasty.hasty.set_logger', mock_set_logger)
-    monkeypatch.setattr('hasty.hasty.Hastebin.paste', hastebin_mock)
+    url: str
+    key: str
+    text: str
 
-    hasty.main([])
-    assert mock_output.call_args[0] == (mock_link, False)
+    @property
+    def link(self):
+        """
+        Creates full fake url from parts
+        """
+        return self.url + self.key
 
 
-def test_bin():
+@pytest.fixture
+def fake_paste():
     """
-    Checks proper class creation
+    Mock values
     """
-    url = 'https://helloworld.com/'
-    logger = Mock()
-    hastebin = hasty.Hastebin(url, logger)
-    assert hastebin.url == url
-    assert hastebin.logger == logger
+    paste = Paste(url='https://helloworld.com/', key='hello111', text='Hello world!')
+    return paste
 
 
-def test_paste():
-    with requests_mock.Mocker() as mock_api:
-        url = 'https://helloworld.com/'
-        mock_response = 'hello111'
-        mock_link = url + mock_response
-        mock_api.post(url + 'documents', json={'key': mock_response})
-        hastebin = hasty.Hastebin(url)
-        link = hastebin.paste('hello world')
-        assert link == mock_link
+@pytest.fixture
+def testing_app(fake_paste):
+    """
+    Creates instance that takes in mock data
+    """
+    get_text = Mock(return_value=fake_paste.text)
+    show_link = Mock()
+    app = hasty.Hasty(url=fake_paste.url, text_source=get_text, link_output=show_link)
+    return app
 
 
-# def test_paste_error():
-#     with requests_mock.Mocker() as mock_api:
-#         url = 'https://hastebin.com/'
-#         mock_response = 'hello111'
-#         mock_api.post(url + 'documents', json={'key': mock_response})
-#
-#         hastebin = hasty.Hastebin('https://helloworld.com/')
-#         with pytest.raises(requests.RequestException):
-#             hastebin.paste('hello world')
-# TODO - get the mocker to return failed requests
+def test_app_creation():
+    """
+    Class should be created without errors
+    """
+    url = 'fakeurl'
+    text_source = Mock()
+    link_output = Mock()
+    app = hasty.Hasty(url, text_source, link_output)
+    assert app.url == url
+    assert app.get_text == text_source
+    assert app.show_link == link_output
 
 
-def test_get_text_from_io():
-    text = 'Text from file'
-    source = io.StringIO(text)
-    result = hasty.get_text(source=source, clipboard=False)
-    assert result == text
+def test_hasty_run(testing_app, fake_paste):
+    """
+    App should get text and try to output link
+    """
+    testing_app.paste = Mock(return_value=fake_paste.link)
+    testing_app.run()
+    # noinspection PyUnresolvedReferences
+    assert testing_app.get_text.called
+    # noinspection PyUnresolvedReferences
+    testing_app.show_link.assert_called_with(fake_paste.link)
 
 
-def text_get_from_stdin(monkeypatch):
-    text = 'Text from stdin'
-    monkeypatch.setattr('sys.stdin', io.StringIO(text))
-    result = hasty.get_text(source=None, clipboard=False)
-    assert result == text
+def test_get_text_assigns_stdin():
+    """
+    Reads from stdin
+    """
+    get_text = hasty.get_text_source(source=None, clipboard=False)
+    assert get_text == sys.stdin.read
 
 
-def test_get_text_from_clipboard(monkeypatch):
-    text = 'Text in clipboard'
-    mock_func = Mock(return_value=text)
-    monkeypatch.setattr('pyperclip.paste', mock_func)
-    result = hasty.get_text(clipboard=True, source=None)
-    assert result == text
+def test_get_text_uses_clipboard():
+    """
+    Uses text from clipboard
+    """
+    get_text = hasty.get_text_source(clipboard=True, source=None)
+    assert get_text == pyperclip.paste
 
 
-def test_show_link_to_clipboard(monkeypatch):
-    link = 'https://helloworld.com/hello111'
-    mock_clip = Mock()
-    monkeypatch.setattr('pyperclip.copy', mock_clip)
-    hasty.show_link(link, clipboard=True)
-    assert mock_clip.call_args[0] == (link,)
+def test_get_text_reads_from_file(fake_file):
+    """
+    Uses file contents
+    """
+    get_text = hasty.get_text_source(clipboard=False, source=fake_file.path)
+    assert get_text == fake_file.path.read_text
 
 
-def test_show_link_to_stdout(capsys):
-    link = 'https://helloworld.com/hello111'
-    hasty.show_link(link, clipboard=False)
-    result = capsys.readouterr().out.rstrip('\n')
-    assert result == link
+@pytest.mark.parametrize("expected_func, clipboard", [
+    (pyperclip.copy, True),
+    (print, False),
+])
+def test_show_link(expected_func: Callable[[str], None], clipboard: bool):
+    """
+    When clipboard is True, link is printed to clipboard, when False, link is printed to stdout
+    """
+    show_link = hasty.get_link_output(clipboard=clipboard)
+    assert show_link == expected_func
+
+
+@pytest.mark.parametrize("error_type", [requests.ConnectionError, requests.HTTPError])
+def test_run_handles_errors(testing_app, error_type):
+    """
+    Handles errors by catching them and logging to stderr
+    """
+    testing_app.paste = Mock(side_effect=error_type)
+    testing_app.run()
+    # noinspection PyUnresolvedReferences
+    assert testing_app.paste.called
+    # noinspection PyUnresolvedReferences
+    assert not testing_app.show_link.called
+
+
+@responses.activate
+def test_paste_raises_connection_error(testing_app, fake_paste):
+    with pytest.raises(requests.ConnectionError):
+        testing_app.paste(fake_paste.text)
+
+
+@responses.activate
+def test_paste_makes_post_request(testing_app, fake_paste):
+    responses.add(responses.POST, fake_paste.url + 'documents',
+                  json={'key': fake_paste.key}, status=200)
+    link = testing_app.paste(fake_paste.text)
+    assert link == fake_paste.link
+
+
+@responses.activate
+def test_paste_bad_request(testing_app, fake_paste):
+    responses.add(responses.POST, fake_paste.url + 'documents',
+                  json={'error': 'not found'}, status=404)
+    with pytest.raises(requests.HTTPError):
+        testing_app.paste(fake_paste.text)
+
+
+@responses.activate
+def test_paste_invalid_response(testing_app, fake_paste):
+    responses.add(responses.POST, fake_paste.url + 'documents',
+                  json={'invalidkey': 'invalid'}, status=200)
+    with pytest.raises(KeyError):
+        testing_app.paste(fake_paste.text)

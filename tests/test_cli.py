@@ -4,7 +4,7 @@ from hasty import cli
 
 def test_args_none():
     """
-    Without args program should use stdin and print to stdout
+    Without args program should use stdin and print to stdout, and debug is off
     """
     args = cli.parse_args([])
     assert not args.copy
@@ -43,13 +43,28 @@ def test_args_paste():
     assert args.paste
 
 
-def test_args_file():
+def test_args_valid_file(fake_file):
     """
     With filename and "--file" argument, argparse tries to open the file
     """
+    args = cli.parse_args(['-f', str(fake_file.path)])
+    assert args.file == fake_file.path
+
+
+def test_args_invalid_file():
+    """
+    Gives error when filename is not valid
+    """
     with pytest.raises(SystemExit):
         cli.parse_args(['-f', 'invalidfilename'])
-    # TODO - mock file opening
+
+
+def test_filename_required():
+    """
+    You can't use file parameter without specifying the filename
+    """
+    with pytest.raises(SystemExit):
+        cli.parse_args(['-f'])
 
 
 def test_args_debug():
@@ -82,11 +97,3 @@ def test_exclusive_args():
         cli.parse_args(['-cf', 'filename'])
     with pytest.raises(SystemExit):
         cli.parse_args(['-cf'])
-
-
-def test_filename_required():
-    """
-    :return: You can't use file parameter without specifying the filename
-    """
-    with pytest.raises(SystemExit):
-        cli.parse_args(['-f'])

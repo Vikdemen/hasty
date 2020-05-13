@@ -1,105 +1,110 @@
 """
-Python alternative for haste-client CLI utility
+Python alternative for haste-client CLI program.
 """
-import io
 import logging
+
 import sys
-from typing import List, Optional
+from pathlib import Path
+from typing import Callable, Optional
 
 import pyperclip
 import requests
-from hasty import cli, config
 
 URL = str
 
 
-def main(argv: List[str]) -> None:
+def get_text_source(clipboard: bool, source: Optional[Path]) -> Callable[[], str]:
     """
-    :param argv: A list of console arguments
-    :return: None
+    :param clipboard: If it should use clipboard or stdin/file
+    :param source: File to get text from, uses stdin if none
+    :return: Function that is used to grab the text
     """
-    args = cli.parse_args(argv)
-
-    logger = set_logger(args.debug)
-    settings = config.Config(logger=logger)
-
-    url = settings.url
-
-    text = get_text(args.copy, args.file)
-    hastebin = Hastebin(url, logger)
-    try:
-        text_link = hastebin.paste(text)
-        show_link(text_link, args.paste)
-    except requests.RequestException:
-        print('Service is unavailable')
-
-
-def set_logger(debug: bool = False):
     logger = logging.getLogger(__name__)
-    level = logging.DEBUG if debug else logging.WARNING
-    logging.basicConfig(level=level)
-    return logger
 
-
-def get_text(clipboard: bool, source: Optional[io.TextIOWrapper]) -> str:
-    """
-    :param clipboard: If it should use clipboard as input
-    :param source: If it doesn't use clipboard, it uses either file contents or stdin
-    :return:
-    """
     if clipboard:
-        text = pyperclip.paste()
+        assert source is None
+        logger.debug('Text will be loaded from clipboard')
+        return pyperclip.paste
     else:
         if source is None:
-            source = sys.stdin
-        try:
-            text = source.read()
-        finally:
-            source.close()
-    return text
+            logger.debug('Text will be loaded from  command line')
+            return sys.stdin.read
+        else:
+            assert source.is_file()
+            logger.debug(f'Text will be loaded from {source}')
+            return source.read_text
 
 
-def show_link(text_link: URL, clipboard: bool) -> None:
+def get_link_output(clipboard: bool) -> Callable[[URL], None]:
     """
-    :param text_link: URL to print
-    :param clipboard: Whether you should use clipboard or stdout
-    :return:
+    :param clipboard: If it should use clipboard
+    :return: Function that is used to output the link
     """
+    logger = logging.getLogger(__name__)
+
     if clipboard:
-        pyperclip.copy(text_link)
+        logger.debug('Link will be printed in clipboard')
+        return pyperclip.copy
     else:
-        print(text_link)
+        logger.debug('Link will be printed in command line')
+        # noinspection PyTypeChecker
+        # apparently the signature of print is too complex
+        return print
 
 
-class Hastebin:
+class Hasty:
     """
     Interface with hastebin-based site
     """
-
-    def __init__(self, url: URL, logger=None):
+    def __init__(self, url: URL, text_source: Callable[[], str], link_output: Callable[[str], None]):
         """
         :param url: Url in https://hastebin.com/ format
         """
         self.url = url
-        self.logger = logger
+        self.get_text = text_source
+        self.show_link = link_output
+        self.logger = logging.getLogger(__name__)
+
+    def run(self) -> None:
+        """
+        Gets the text, posts it on a website and shows the link
+        """
+        text = self.get_text()
+        try:
+            link = self.paste(text)
+        except KeyError as ex:
+            logging.debug(ex, exc_info=True)
+            logging.error('Invalid response format')
+        except requests.exceptions.ConnectionError as ex:
+            logging.debug(ex, exc_info=True)
+            logging.error('Unable to establish internet connection')
+        except requests.exceptions.HTTPError as ex:
+            logging.debug(ex, exc_info=True)
+            logging.error('Service is unavailable')
+        except requests.exceptions.RequestException as ex:
+            logging.debug(ex, exc_info=True)
+            logging.error('Unknown error while making a request')
+        else:
+            logging.info('Task successful')
+            self.show_link(link)
 
     def paste(self, text: str) -> URL:
         """
         Sends the text to hastebin-based site
         :param text: Text to post on hastebin
-        :return: Link to the paste`
+        :return: Link to the pasted text.
+        :raises KeyError: Invalid JSON
+        :raises ConnectionError: No internet connection
+        :raises HTTPError: Bad response
         """
-        if self.logger is not None:
-            self.logger.debug(f'Text received is {text}')
-            self.logger.debug(f'Pasting to {self.url}')
+        self.logger.debug(f'Text received is {text}')
+        self.logger.debug(f'Pasting to {self.url}')
         response = requests.post(self.url + 'documents', text)
-        if self.logger is not None:
-            self.logger.debug(f'Response code is {response.status_code}')
         if response.ok:
-            key: str = response.json()['key']
-            if self.logger is not None:
-                self.logger.info(f'Link received is {self.url}{key}')
-            return self.url + key
+            self.logger.debug(f'Response code is {response.status_code}')
         else:
-            self.logger.error(f'Invalid response code {response.status_code}')
-            raise requests.RequestException()
+            self.logger.warning(f'Response code is {response.status_code}')
+        response.raise_for_status()
+        key: str = response.json()['key']
+        self.logger.info(f'Link received is {self.url}{key}')
+        return self.url + key
