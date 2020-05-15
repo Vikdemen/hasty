@@ -1,7 +1,3 @@
 pyperclip~=1.8.0
 requests~=2.23.0
-setuptools~=46.2.0
-
-#testing
-pytest~=5.4.2
-responses~=0.10.14
+setuptools~=46.3.0
