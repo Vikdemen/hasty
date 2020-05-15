@@ -18,4 +18,13 @@ def fake_file(tmp_path):
     fake_filepath.unlink()
 
 
+@pytest.fixture
+def test_config_file(tmp_path):
+    text = r"""[DEFAULT]
+url = https://paste.pythondiscord.com/"""
+    filepath = tmp_path / 'test_config.ini'
+    filepath.write_text(text)
+    yield File(path=filepath, content=text)
+    filepath.unlink()
+
 
