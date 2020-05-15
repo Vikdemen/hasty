@@ -9,7 +9,7 @@ import pytest
 import pyperclip
 import requests
 import responses
-from hasty import hasty
+from hasty import hasty_app
 
 
 class Paste(NamedTuple):
@@ -44,7 +44,7 @@ def testing_app(fake_paste):
     """
     get_text = Mock(return_value=fake_paste.text)
     show_link = Mock()
-    app = hasty.Hasty(url=fake_paste.url, text_source=get_text, link_output=show_link)
+    app = hasty_app.Hasty(url=fake_paste.url, text_source=get_text, link_output=show_link)
     return app
 
 
@@ -55,7 +55,7 @@ def test_app_creation():
     url = 'fakeurl'
     text_source = Mock()
     link_output = Mock()
-    app = hasty.Hasty(url, text_source, link_output)
+    app = hasty_app.Hasty(url, text_source, link_output)
     assert app.url == url
     assert app.get_text == text_source
     assert app.show_link == link_output
@@ -77,7 +77,7 @@ def test_get_text_assigns_stdin():
     """
     Reads from stdin
     """
-    get_text = hasty.get_text_source(source=None, clipboard=False)
+    get_text = hasty_app.get_text_source(source=None, clipboard=False)
     assert get_text == sys.stdin.read
 
 
@@ -85,7 +85,7 @@ def test_get_text_uses_clipboard():
     """
     Uses text from clipboard
     """
-    get_text = hasty.get_text_source(clipboard=True, source=None)
+    get_text = hasty_app.get_text_source(clipboard=True, source=None)
     assert get_text == pyperclip.paste
 
 
@@ -93,7 +93,7 @@ def test_get_text_reads_from_file(fake_file):
     """
     Uses file contents
     """
-    get_text = hasty.get_text_source(clipboard=False, source=fake_file.path)
+    get_text = hasty_app.get_text_source(clipboard=False, source=fake_file.path)
     assert get_text == fake_file.path.read_text
 
 
@@ -105,7 +105,7 @@ def test_show_link(expected_func: Callable[[str], None], clipboard: bool):
     """
     When clipboard is True, link is printed to clipboard, when False, link is printed to stdout
     """
-    show_link = hasty.get_link_output(clipboard=clipboard)
+    show_link = hasty_app.get_link_output(clipboard=clipboard)
     assert show_link == expected_func
 
 

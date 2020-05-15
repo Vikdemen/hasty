@@ -10,4 +10,4 @@ def test_load_config_no_file():
 
 
 def test_load_config_invalid_format(fake_file):
-    assert hasty.config.load_config(fake_file.path, absolute=True) == hasty.config.DEFAULT_URL
+    assert hasty.config.load_config(fake_file.path, relative=True) == hasty.config.DEFAULT_URL

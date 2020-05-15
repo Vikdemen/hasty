@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- encoding: utf-8 -*-
 import logging
-from hasty import hasty, log_setup, cli, config
+from hasty import hasty_app, log_setup, cli, config
 
 
 def main():
@@ -15,9 +15,9 @@ def main():
 
     url = config.load_config()
 
-    text_source = hasty.get_text_source(args.copy, args.file)
-    link_output = hasty.get_link_output(args.paste)
-    app = hasty.Hasty(url, text_source=text_source, link_output=link_output)
+    text_source = hasty_app.get_text_source(args.copy, args.file)
+    link_output = hasty_app.get_link_output(args.paste)
+    app = hasty_app.Hasty(url, text_source=text_source, link_output=link_output)
     logger.info(
         f"App initialised with url {url} and command line arguments: " +
         ', '.join([f'{arg} = {value}' for arg, value in vars(args).items()]))
