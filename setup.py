@@ -5,6 +5,16 @@ from setuptools import setup, find_packages
 setup(
     name='hasty',
     version='0.0.1',
+    install_requires=[
+        'requests',
+        'pyperclip',
+    ],
+    extras_require={
+        'testing': [
+            'pytest',
+            'responses'
+        ],
+    },
     package_dir={'': 'src'},
     packages=find_packages(where='src'),
     include_package_data=True,
