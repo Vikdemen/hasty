@@ -44,7 +44,7 @@ def testing_app(fake_paste):
     """
     get_text = Mock(return_value=fake_paste.text)
     show_link = Mock()
-    app = hasty_app.Hasty(url=fake_paste.url, text_source=get_text, link_output=show_link)
+    app = hasty_app.HasteClient(url=fake_paste.url, text_source=get_text, link_output=show_link)
     return app
 
 
@@ -55,7 +55,7 @@ def test_app_creation():
     url = 'fakeurl'
     text_source = Mock()
     link_output = Mock()
-    app = hasty_app.Hasty(url, text_source, link_output)
+    app = hasty_app.HasteClient(url, text_source, link_output)
     assert app.url == url
     assert app.get_text == text_source
     assert app.show_link == link_output
@@ -109,7 +109,7 @@ def test_show_link(expected_func: Callable[[str], None], clipboard: bool):
     assert show_link == expected_func
 
 
-@pytest.mark.parametrize("error_type", [requests.ConnectionError, requests.HTTPError])
+@pytest.mark.parametrize("error_type", [requests.ConnectionError, requests.HTTPError, KeyError, ValueError])
 def test_run_handles_errors(testing_app, error_type):
     """
     Handles errors by catching them and logging to stderr

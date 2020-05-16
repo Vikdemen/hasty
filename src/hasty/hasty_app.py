@@ -52,13 +52,15 @@ def get_link_output(clipboard: bool) -> Callable[[URL], None]:
         return print
 
 
-class Hasty:
+class HasteClient:
     """
-    Interface with hastebin-based site
+    Class that allows to paste text on hastebin-based websites and retrieve the link
     """
     def __init__(self, url: URL, text_source: Callable[[], str], link_output: Callable[[str], None]):
         """
         :param url: Url in https://hastebin.com/ format
+        :param text_source: Function which is used to get the input
+        :param link_output: Function which is used to output the result
         """
         self.url = url
         self.get_text = text_source
@@ -72,7 +74,7 @@ class Hasty:
         text = self.get_text()
         try:
             link = self.paste(text)
-        except KeyError as ex:
+        except (KeyError, ValueError) as ex:
             logging.debug(ex, exc_info=True)
             logging.error('Invalid response format')
         except requests.exceptions.ConnectionError as ex:
@@ -94,6 +96,7 @@ class Hasty:
         :param text: Text to post on hastebin
         :return: Link to the pasted text.
         :raises KeyError: Invalid JSON
+        :raises ValueError: No JSON in response
         :raises ConnectionError: No internet connection
         :raises HTTPError: Bad response
         """
